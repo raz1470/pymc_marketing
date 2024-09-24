@@ -25,24 +25,27 @@ def data_generator(start_date, periods, channels, spend_scalar, adstock_alphas, 
     df = pd.DataFrame({'date': date_range})
     
     # 1. Add trend component with some growth
-    df["trend"]= (np.linspace(start=0.0, stop=20, num=periods) + 5) ** (1 / 5) - 1
+    df["trend"]= (np.linspace(start=0.0, stop=20, num=periods) + 5) ** (1 / 8) - 1
     
     # 2. Add seasonal component with oscillation around 0
-    df["seasonality"] = 0.1 * np.sin(2 * np.pi * df.index / 52)
+    df["seasonality"] = df["seasonality"] = 0.1 * np.sin(2 * np.pi * df.index / 52)
     
     # 3. Multiply trend and seasonality to create overall demand with noise
     df["demand"] = df["trend"] * (1 + df["seasonality"]) + np.random.normal(loc=0, scale=0.10, size=periods)
+    df["demand"] = df["demand"] * 1000
     
-    df["demand"] = df["demand"] * 100
+    # 4. Create proxy for demand, which is able to follow demand but has some noise added
+    df["demand_proxy"] = np.abs(df["demand"]* np.random.normal(loc=1, scale=0.10, size=periods))
     
-    # 4. Initialize sales based on demand
+    # 5. Initialize sales based on demand
     df["sales"] = df["demand"]
     
-    # 5. Loop through each channel and add channel-specific contribution
+    # 6. Loop through each channel and add channel-specific contribution
     for i, channel in enumerate(channels):
         
-        # Create raw channel spend
-        df[f"{channel}_spend_raw"] = np.abs((df["demand"] * spend_scalar[i]) + np.random.normal(loc=0, scale=0.4, size=periods))
+        # Create raw channel spend, following demand with some random noise added
+        df[f"{channel}_spend_raw"] = df["demand"] * spend_scalar[i]
+        df[f"{channel}_spend_raw"] = np.abs(df[f"{channel}_spend_raw"] * np.random.normal(loc=1, scale=0.30, size=periods))
                
         # Scale channel spend
         channel_transformer = MaxAbsScaler().fit(df[f"{channel}_spend_raw"].values.reshape(-1, 1))
