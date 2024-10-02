@@ -49,7 +49,7 @@ def data_generator(start_date, periods, channels, spend_scalar, adstock_alphas, 
                
         # Scale channel spend
         channel_transformer = MaxAbsScaler().fit(df[f"{channel}_spend_raw"].values.reshape(-1, 1))
-        df[f"{channel}_spend"] = channel_transformer .transform(df[f"{channel}_spend_raw"].values.reshape(-1, 1))
+        df[f"{channel}_spend"] = channel_transformer.transform(df[f"{channel}_spend_raw"].values.reshape(-1, 1))
         
         # Apply adstock transformation
         df[f"{channel}_adstock"] = geometric_adstock(
